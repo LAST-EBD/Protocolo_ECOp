@@ -11,8 +11,6 @@ from datetime import datetime, date
 from scipy import ndimage
 from scipy.stats import linregress
 from urllib.request import urlopen
-#from IPython.display import Image
-#from IPython.display import display
 
 
 class NLandsat(object):
@@ -120,9 +118,12 @@ class NLandsat(object):
         '''This method generate the Cloud, shadow and water mask alternative to Fmask'''
         
         #We are saving the watermask needed to calculate kl values in temp (same values that are used in Fmask)
+        print('starting get water')
         outfile = os.path.join(self.temp, self.escena + '_watermask.tif')
         
         for i in os.listdir(self.ruta_escena):
+            
+            
             
             if i.endswith('.TIF') and not 'BQA' in i:
                 
@@ -182,7 +183,7 @@ class NLandsat(object):
                 print('Starting Fmask')
                 t = time.time()
                 #Last value is the cloud confidence value 
-                a = os.system('etc/usr/GERS/Fmask_4_0/application/run_Fmask_4_0.sh /usr/local/MATLAB/MATLAB_Runtime/v93 3 3 1 {}'.format(self.umbral))
+                a = os.system('pathtoremove/usr/GERS/Fmask_4_0/application/run_Fmask_4_0.sh /usr/local/MATLAB/MATLAB_Runtime/v93 3 3 1 {}'.format(self.umbral))
                 a
                 if a == 0:
                     self.cloud_mask = 'Fmask'
@@ -203,11 +204,12 @@ class NLandsat(object):
                             cirrus = masker.get_cirrus_mask(conf)
                             shadow = masker.get_cloud_shadow_mask(conf)
 
-                            MASCARA = cloud + cirrus + shadow
-                   
-                    masker.save_tif(MASCARA, outfile)  
+                            MASCARA = cloud + cirrus + shadow                    
+                            masker.save_tif(mascara, outfile)
+                            
                     self.cloud_mask = 'BQA'
                     print('Cloud Mask (BQA) generated in ' + str(t-time.time()) + ' seconds')
+                    print('Calling get_water')
                     self.get_water()
                                            
             except Exception as e:
@@ -316,6 +318,25 @@ class NLandsat(object):
                     print(cmd)
                     os.system(cmd)
                     
+                elif re.search('Fmask', i):
+
+                    ins = os.path.join(self.ruta_escena, i)
+                    out = os.path.join(path_rad, i)
+
+                    cmd = "gdal_translate -projwin  623385.0 4266315.0 867615.0 4034685.0 -a_nodata 255 {} {}".format(ins, out)
+                    print(cmd)
+                    os.system(cmd)
+                    
+                    #In this case we also need to proj water_mask
+                    wmask = [i for i in os.listdir(self.temp) if i.endswith('watermask.tif')]
+                    ins = os.path.join(self.temp, wmask[0])
+                    out = os.path.join(self.temp, wmask[0][:-4] + '_proj.tif')
+                    
+                    cmd = "gdal_translate -projwin  623385.0 4266315.0 867615.0 4034685.0 -a_nodata 255 {} {}".format(ins, out)
+                    print(cmd)
+                    os.system(cmd)                    
+
+                    
                 else: continue
                     
         else:
@@ -329,7 +350,29 @@ class NLandsat(object):
                     cmd = "gdal_translate -projwin  623385.0 4266315.0 867615.0 4034685.0 {} {}".format(ins, out)
                     print(cmd)
                     os.system(cmd)
+                    
+                elif re.search('Fmask', i):
+
+                    ins = os.path.join(self.ruta_escena, i)
+                    out = os.path.join(path_rad, i)
+
+                    cmd = "gdal_translate -projwin  623385.0 4266315.0 867615.0 4034685.0 -a_nodata 255 {} {}".format(ins, out)
+                    print(cmd)
+                    os.system(cmd)
+                    
+                    #In this case we also need to proj water_mask
+                    wmask = [i for i in os.listdir(self.temp) if i.endswith('watermask.tif')]
+                    ins = os.path.join(self.temp, wmask[0])
+                    out = os.path.join(self.temp, wmask[0][:-4] + '_proj.tif')
+                    
+                    cmd = "gdal_translate -projwin  623385.0 4266315.0 867615.0 4034685.0 -a_nodata 255 {} {}".format(ins, out)
+                    print(cmd)
+                    os.system(cmd)                    
+
+                    
+                else: continue
                 
+        print('Projections to the common extent finished')
                 
     def get_kl_csw(self):
         
@@ -338,12 +381,11 @@ class NLandsat(object):
         by clouds or cloud shadow. The quality of the mask is very important, that is why the scenes that 
         can not be done with Fmask would have to check the value of kl.'''
     
-        #We start deleting files from temp, so we keep values of the last scene ina case they are needed to check anything
-        t = time.time()
-
-        for i in os.listdir(self.temp):
-            arz = os.path.join(self.temp, i)
-            os.remove(arz)
+        #We started deleting files from temp, but this are not needed for the VLab or we can do it at the end of the process
+        
+        #for i in os.listdir(self.temp):
+            #arz = os.path.join(self.temp, i)
+            #os.remove(arz)
 
         
         t = time.time()
@@ -374,7 +416,7 @@ class NLandsat(object):
         
         for i in os.listdir(ruta):
             
-            if i.endswith('Fmask4.tif'): 
+            if 'Fmask' in i: 
                 rs = os.path.join(ruta, i)
                 Fmask = gdal.Open(rs).ReadAsArray()
                 print('Fmask: min, max, size: ', Fmask.min(), Fmask.max(), Fmask.size)
@@ -423,7 +465,27 @@ class NLandsat(object):
                         inner = os.path.join(self.data, 'intern_buffer.tif')
                         Inner = gdal.Open(inner).ReadAsArray()
                         data2 = data[((Inner == 1) & ((Fmask==1) | (((Fmask==0) & (data != 0)) & (Hillshade<(np.percentile(Hillshade, 20))))))]
-
+                
+                
+                elif self.cloud_mask == 'BQA':
+                    
+                    #Pick the water mask generated to complete BQA info
+                    for i in os.listdir(self.temp):
+                        if i.endswith('_proj.tif'):
+                            water = os.path.join(self.temp, i)
+                    Water = rasterio.open(water).read()    
+                    
+                    if self.sat == 'L8':
+                            print('using BQA with Landsat 8')
+                            data2 = data[(data != 0) & (((Fmask==0) & (data != 0)) & (Hillshade<(np.percentile(Hillshade, 20))) | (Water==1))]
+                    else:
+                        print('using BQA with Landsat', self.sat)
+                        #Abrimos la mascara para evitar problemas con los valores bajos en los bordes de Fmask
+                        inner = os.path.join(self.data, 'intern_buffer.tif')
+                        Inner = gdal.Open(inner).ReadAsArray()
+                        data2 = data[(Inner == 1) & (((Fmask==0) & (data != 0)) & (Hillshade<(np.percentile(Hillshade, 20))) | (Water==1))]
+                                
+                                
                         #mask = np.copy(data)
                         #mask[mask != 0] == 1
                         #print('Ahora viene el erode')
@@ -434,24 +496,24 @@ class NLandsat(object):
                     
                     #Aqui iria una alternativa a Fmask si fallara
 
-                    print('data 2 obtained')
-    
-                    lista = sorted(data2.tolist())
-                    print(sorted(lista)[:10])
-                    self.kl[banda] = data2.min() #np.mean(lista10)data2.min()
-                    data3 = data2[:self.hist]
-                    
-                    print('data3: ', data3.min(), data3.max())
+                print('data 2 obtained')
 
-                    df = pandas.DataFrame(lista[:10000])
-                    plt.figure(); df.hist(figsize=(10,8), bins = 20, cumulative=False, color="Red"); 
-                    plt.title(self.escena + '_gr_' + banda, fontsize = 18)
-                    plt.xlabel("Pixel Value", fontsize=16)  
-                    plt.ylabel("Count", fontsize=16)
-                    path_rad = os.path.join(self.rad, self.escena)
-                    os.makedirs(path_rad, exist_ok=True)
-                    name = os.path.join(path_rad, self.escena + '_gr_'+ banda.lower() + '.png')
-                    plt.savefig(name)
+                lista = sorted(data2.tolist())
+                print(sorted(lista)[:10])
+                self.kl[banda] = data2.min() #np.mean(lista10)data2.min()
+                data3 = data2[:self.hist]
+
+                print('data3: ', data3.min(), data3.max())
+
+                df = pandas.DataFrame(lista[:10000])
+                plt.figure(); df.hist(figsize=(10,8), bins = 20, cumulative=False, color="Red"); 
+                plt.title(self.escena + '_gr_' + banda, fontsize = 18)
+                plt.xlabel("Pixel Value", fontsize=16)  
+                plt.ylabel("Count", fontsize=16)
+                path_rad = os.path.join(self.rad, self.escena)
+                os.makedirs(path_rad, exist_ok=True)
+                name = os.path.join(path_rad, self.escena + '_gr_'+ banda.lower() + '.png')
+                plt.savefig(name)
 
         plt.close('all')
         
@@ -848,11 +910,11 @@ class NLandsat(object):
         t0 = time.time()
         self.fmask()
         self.get_cloud_pn()
-        #self.remove_masks()
-        #self.projwin()
-        #self.get_kl_csw()
-        #self.get_radiance()
-        #self.corrad()
-        #self.clean_rad()
-        #self.normalize()
+        self.remove_masks()
+        self.projwin()
+        self.get_kl_csw()
+        self.get_radiance()
+        self.corrad()
+        self.clean_rad()
+        self.normalize()
         print('Process finsihed in', abs(t0-time.time()), 'seconds')
