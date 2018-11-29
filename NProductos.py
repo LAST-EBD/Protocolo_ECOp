@@ -88,7 +88,7 @@ class Product(object):
         
     def ndvi(self):
 
-        outfile = os.path.join(self.productos, self.escena + '_ndvi_.tif')
+        outfile = os.path.join(self.pro_esc, self.escena + '_ndvi_.tif')
         print(outfile)
         
         with rasterio.open(self.nir) as nir:
@@ -116,7 +116,7 @@ class Product(object):
     def flood(self):
         
         waterMask = os.path.join(self.data, 'water_mask_turb.tif')
-        outfile = os.path.join(self.productos, self.escena + '_flood.tif')
+        outfile = os.path.join(self.pro_esc, self.escena + '_flood.tif')
         print(outfile)
         
         with rasterio.open(waterMask) as wmask:
@@ -139,15 +139,17 @@ class Product(object):
         with rasterio.open(outfile, 'w', **profile) as dst:
             dst.write(flood.astype(rasterio.ubyte))
             
-            
+        
         print('Flood Mask Generada')
+        
+        return outfile
         
         
         
     def turbidity(self, flood):
         
         waterMask = os.path.join(self.data, 'water_mask_turb.tif')
-        outfile = os.path.join(self.productos, self.escena + '_turbidity.tif')
+        outfile = os.path.join(self.pro_esc, self.escena + '_turbidity.tif')
         print(outfile)
         
         with rasterio.open(flood) as flood:

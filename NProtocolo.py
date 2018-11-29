@@ -49,7 +49,7 @@ class NLandsat(object):
         and all the other variables are getting from there. Default parameters are threshold confidence for Fmask 
         and number of bins for the histogram in the kl step'''
         
-        
+    
         self.ruta_escena = ruta
         self.ori = os.path.split(ruta)[0]
         self.escena = os.path.split(ruta)[1]
