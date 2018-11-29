@@ -1,0 +1,16 @@
+{
+  "image": "name of the docker hub repo",
+  "resources": {
+    "memory_mb": "5000",
+    "cpu_units": ""
+  },
+  "container": {
+    "entryPoint": [
+      "/bin/bash",
+      "-c"
+    ],
+    "command": [
+      "./run.sh"
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "inputs": [
+    {
+      "id": "DataObject_0h3a3ff",
+      "inputType": "individual",
+      "valueType": "value",
+      "description": "URL to download the zip file that contains the Landsat Scene to process, named 'landsat_scene.zip'",
+      "name": "landsat_scene",
+      "obligation": true,
+      "hasDefault": false,
+      "valueSchema": "url",
+      "target": "input/landsat_scene.zip"
+    },
+	{
+      "id": "DataObject_0h3a4ff",
+      "inputType": "individual",
+      "valueType": "value",
+      "description": "URL to download the data folder needed to the process, named 'data.zip'",
+      "name": "data",
+      "obligation": true,
+      "hasDefault": false,
+      "valueSchema": "url",
+      "target": "input/data.zip"
+    }
+  ],
+  "outputs": [
+    {
+      "id": "DataObject_0n95v5p",
+      "outputType": "individual",
+      "valueType": "value",
+      "description": "GeoTIFF with NDVI, Flood Mask and Turbidity Water Mask",
+      "name": "GeoTIFF with NDVI, Flood Mask and Turbidity Water Mask",
+      "valueSchema": "url",
+      "target": "output/products.zip"
+    }
+  ]
+}

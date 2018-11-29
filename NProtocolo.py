@@ -2,15 +2,17 @@
 # coding: utf-8
 #%matplotlib inline
 
-import os, shutil, pymongo, re, time, subprocess, pandas, rasterio, sys, stat 
+import os, shutil, re, time, subprocess, pandas, rasterio, sys, stat 
 import numpy as np
+import gdal, gdalconst
 import seaborn as sns; sns.set(color_codes=True)
 import matplotlib.pyplot as plt
-from osgeo import gdal, gdalconst
 from datetime import datetime, date
 from scipy import ndimage
 from scipy.stats import linregress
-from urllib.request import urlopen
+from pymasker import LandsatMasker
+from pymasker import LandsatConfidence
+
 
 
 class NLandsat(object):
@@ -89,27 +91,27 @@ class NLandsat(object):
                         self.mtl[l[0].strip()] = l[1].strip()             
                         
         #Quicklook download 
-        print('We are going to save the quicklook')
-        self.quicklook = os.path.join(self.ruta_escena, self.mtl['LANDSAT_SCENE_ID'] + '.jpg')
+        #print('We are going to save the quicklook')
+        #self.quicklook = os.path.join(self.ruta_escena, self.mtl['LANDSAT_SCENE_ID'] + '.jpg')
 
-        if self.sat == 'L7':
-            sensor = 'etm'
-        elif self.sat == 'L5' or self.sat == 'L4':
-            sensor = 'tm'
+        #if self.sat == 'L7':
+            #sensor = 'etm'
+        #elif self.sat == 'L5' or self.sat == 'L4':
+            #sensor = 'tm'
 
-        qcklk = open(self.quicklook,'wb')
-        if self.sat == 'L8':
-            s = 'https://earthexplorer.usgs.gov/browse/landsat_8_c1/{}/202/034/{}.jpg'.format(self.escena[:4], self.mtl['LANDSAT_PRODUCT_ID'][1:-1])
-            print(s)
-        else:
-            s = 'https://earthexplorer.usgs.gov/browse/landsat_{}_c1/{}/202/034/{}.jpg'.format(sensor, self.escena[:4], self.mtl['LANDSAT_PRODUCT_ID'][1:-1])
-            print(s)
+        #qcklk = open(self.quicklook,'wb')
+        #if self.sat == 'L8':
+            #s = 'https://earthexplorer.usgs.gov/browse/landsat_8_c1/{}/202/034/{}.jpg'.format(self.escena[:4], self.mtl['LANDSAT_PRODUCT_ID'][1:-1])
+            #print(s)
+        #else:
+            #s = 'https://earthexplorer.usgs.gov/browse/landsat_{}_c1/{}/202/034/{}.jpg'.format(sensor, self.escena[:4], self.mtl['LANDSAT_PRODUCT_ID'][1:-1])
+            #print(s)
             
         #We save the miage quicklook to /ori
-        u2=urlopen(s)
-        junk=u2.read()
-        qcklk.write(junk)
-        qcklk.close()
+        #u2=urlopen(s)
+        #junk=u2.read()
+        #qcklk.write(junk)
+        #qcklk.close()
         
         
         
@@ -129,7 +131,7 @@ class NLandsat(object):
                 
                 banda = i.split('_')[-1].split('.')[0]
                 
-                if banda not in ['B10', 'B11']:
+                if banda not in ['B10', 'B11', 'B6']:
                     REFMULT = float(self.mtl['REFLECTANCE_MULT_BAND_'+ banda[1:]])
                     REFADD = float(self.mtl['REFLECTANCE_ADD_BAND_'+ banda[1:]])
 
@@ -183,7 +185,7 @@ class NLandsat(object):
                 print('Starting Fmask')
                 t = time.time()
                 #Last value is the cloud confidence value 
-                a = os.system('pathtoremove/usr/GERS/Fmask_4_0/application/run_Fmask_4_0.sh /usr/local/MATLAB/MATLAB_Runtime/v93 3 3 1 {}'.format(self.umbral))
+                a = os.system('removethisisFmaskinstalled/usr/GERS/Fmask_4_0/application/run_Fmask_4_0.sh /usr/local/MATLAB/MATLAB_Runtime/v93 3 3 1 {}'.format(self.umbral))
                 a
                 if a == 0:
                     self.cloud_mask = 'Fmask'
@@ -205,7 +207,7 @@ class NLandsat(object):
                             shadow = masker.get_cloud_shadow_mask(conf)
 
                             MASCARA = cloud + cirrus + shadow                    
-                            masker.save_tif(mascara, outfile)
+                            masker.save_tif(MASCARA, outfile)
                             
                     self.cloud_mask = 'BQA'
                     print('Cloud Mask (BQA) generated in ' + str(t-time.time()) + ' seconds')
@@ -483,7 +485,7 @@ class NLandsat(object):
                         #Abrimos la mascara para evitar problemas con los valores bajos en los bordes de Fmask
                         inner = os.path.join(self.data, 'intern_buffer.tif')
                         Inner = gdal.Open(inner).ReadAsArray()
-                        data2 = data[(Inner == 1) & (((Fmask==0) & (data != 0)) & (Hillshade<(np.percentile(Hillshade, 20))) | (Water==1))]
+                        data2 = data[(data != 0) & (Inner == 1) & (((Fmask==0) & (data != 0)) & (Hillshade<(np.percentile(Hillshade, 20))) | (Water==1))]
                                 
                                 
                         #mask = np.copy(data)
@@ -629,12 +631,13 @@ class NLandsat(object):
 
         for i in os.listdir(path_rad):
             if not re.search('^[0-9]', i):
-                if not 'Fmask4' in i:
-                    os.remove(os.path.join(path_rad, i))
-                else:
-                    old = os.path.join(path_rad, i)
-                    new = os.path.join(path_nor, self.escena + '_Fmask4.tif')
-                    os.rename(old, new)
+                #if not 'Fmask' in i:
+                os.remove(os.path.join(path_rad, i))
+            elif 'Fmask' in i:
+                print('moving Fmask to nor')
+                old = os.path.join(path_rad, i)
+                new = os.path.join(path_nor, self.escena + '_Fmask.tif')
+                os.rename(old, new)
                     
                     
     
@@ -714,12 +717,12 @@ class NLandsat(object):
         print('starting nor1')
         
         #path to reference scene bands
-        path_b1 = os.path.join(self.data, '20020817l7etm202_34_ref_B1.tif')
-        path_b2 = os.path.join(self.data, '20020817l7etm202_34_ref_B2.tif')
-        path_b3 = os.path.join(self.data, '20020817l7etm202_34_ref_B3.tif')
-        path_b4 = os.path.join(self.data, '20020817l7etm202_34_ref_B4.tif')
-        path_b5 = os.path.join(self.data, '20020817l7etm202_34_ref_B5.tif')
-        path_b7 = os.path.join(self.data, '20020817l7etm202_34_ref_B7.tif')
+        path_b1 = os.path.join(self.data, '20020718l7etm202_34_ref_B1.tif')
+        path_b2 = os.path.join(self.data, '20020718l7etm202_34_ref_B2.tif')
+        path_b3 = os.path.join(self.data, '20020718l7etm202_34_ref_B3.tif')
+        path_b4 = os.path.join(self.data, '20020718l7etm202_34_ref_B4.tif')
+        path_b5 = os.path.join(self.data, '20020718l7etm202_34_ref_B5.tif')
+        path_b7 = os.path.join(self.data, '20020718l7etm202_34_ref_B7.tif')
         
         dnorbandasl8 = {'B2': path_b1, 'B3': path_b2, 'B4': path_b3, 'B5': path_b4, 'B6': path_b5, 'B7': path_b7}
         dnorbandasl7 = {'B1': path_b1, 'B2': path_b2, 'B3': path_b3, 'B4': path_b4, 'B5': path_b5, 'B7': path_b7}
@@ -728,10 +731,13 @@ class NLandsat(object):
             dnorbandas = dnorbandasl8
         else:
             dnorbandas = dnorbandasl7
-            
+        
         path_nor = os.path.join(self.nor, self.escena)
-                    
-        mask_nubes = os.path.join(path_nor, self.escena + '_Fmask4.tif')
+        
+        
+        for i in os.listdir(path_nor):
+            if 'Fmask' in i:
+                mask_nubes = os.path.join(path_nor, i)
         print('Cloud: ', mask_nubes)
         
         if mascara == self.noequilibrado:
@@ -772,7 +778,7 @@ class NLandsat(object):
                         
             esperado = BANDA2 * First_slope + First_intercept
             residuo = REF2 - esperado
-            #print('DESVIACION TÍPICA PRIMERA REGRESION:', std_err) COMO DE BUENO ES EL AJUSTE (SLOPE DAVID)
+            
             print('RESIDUO STD:', residuo.std())
             print('RESIDUO STD_DDOF:', residuo.std(ddof=1))
             std = residuo.std() * coef

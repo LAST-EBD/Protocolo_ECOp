@@ -1,0 +1,24 @@
+{
+  "scripts": [
+    {
+      "repoPath": "run.sh",
+      "targetPath": "run.sh",
+      "pathType": "FILE"
+ },
+    {
+      "repoPath": "NProtocolo.py",
+      "targetPath": "NProtocolo.py",
+      "pathType": "FILE"
+ },
+    {
+      "repoPath": "NProductos.py",
+      "targetPath": "NProductos.py",
+      "pathType": "FILE"
+ },
+    {
+      "repoPath": "NCall.py",
+      "targetPath": "Ncall.py",
+      "pathType": "FILE"
+ }
+  ]
+}

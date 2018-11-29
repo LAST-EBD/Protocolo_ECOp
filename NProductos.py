@@ -1,14 +1,12 @@
 
-import os, shutil, re, time, subprocess, pandas, rasterio, sys, urllib, fiona, sqlite3, math, pymongo
+import os, shutil, re, time, subprocess, pandas, rasterio, sys, urllib, fiona, math
 import numpy as np
-import matplotlib.pyplot as plt
-from osgeo import gdal, gdalconst
-from datetime import datetime, date
+
 
 class Product(object):
     
     
-    '''Esta clase genera los productos deinundacion, turbidez del agua y ndvi de las escenas normalizadas'''
+    '''This class is made to generate NDVI, Flood Masks and Water Turbidity Masks from Landsat normalized scenes'''
     
         
     def __init__(self, ruta_nor):
@@ -58,7 +56,7 @@ class Product(object):
                         self.swir1 = os.path.join(self.nor, i)
                     elif banda == 'b7':
                         self.swir2 = os.path.join(self.nor, i)
-                    elif banda == 'k4':
+                    elif banda == 'k4' or banda == 'sk':
                         self.fmask = os.path.join(self.nor, i)
                     
         else:
@@ -80,22 +78,10 @@ class Product(object):
                         self.swir1 = os.path.join(self.nor, i)
                     elif banda == 'b7':
                         self.swir2 = os.path.join(self.nor, i)
-                    elif banda == 'k4':
+                    elif banda == 'k4' or banda == 'sk':
                         self.fmask = os.path.join(self.nor, i)
         
-        #Insertamos la cobertura de nubes en la BD
-        connection = pymongo.MongoClient("mongodb://localhost")
-        db=connection.teledeteccion
-        landsat = db.landsat
         
-        
-        try:
-        
-            landsat.update_one({'_id':self.escena}, {'$set':{'Productos': []}},  upsert=True)
-            
-        except Exception as e:
-            print("Unexpected error:", type(e), e)
-            
         print('escena importada para productos correctamente')
         
         
@@ -122,18 +108,6 @@ class Product(object):
         with rasterio.open(outfile, 'w', **profile) as dst:
             dst.write(ndvi.astype(rasterio.float32))
             
-        #Insertamos la cobertura de nubes en la BD
-        connection = pymongo.MongoClient("mongodb://localhost")
-        db=connection.teledeteccion
-        landsat = db.landsat
-        
-        
-        try:
-        
-            landsat.update_one({'_id':self.escena}, {'$set':{'Productos': ['NDVI']}},  upsert=True)
-            
-        except Exception as e:
-            print("Unexpected error:", type(e), e)
             
         print('NDVI Generado')
         
@@ -165,20 +139,8 @@ class Product(object):
         with rasterio.open(outfile, 'w', **profile) as dst:
             dst.write(flood.astype(rasterio.ubyte))
             
-        #Insertamos la cobertura de nubes en la BD
-        connection = pymongo.MongoClient("mongodb://localhost")
-        db=connection.teledeteccion
-        landsat = db.landsat
-        
-        
-        try:
-        
-            landsat.update_one({'_id':self.escena}, {'$set':{'Productos': ['Flood']}},  upsert=True)
             
-        except Exception as e:
-            print("Unexpected error:", type(e), e)
-            
-        print('Fllod Mask Generada')
+        print('Flood Mask Generada')
         
         
         
@@ -247,17 +209,5 @@ class Product(object):
         with rasterio.open(outfile, 'w', **profile) as dst:
             dst.write(TURBIDEZ.astype(rasterio.float32))
             
-        #Insertamos la cobertura de nubes en la BD
-        connection = pymongo.MongoClient("mongodb://localhost")
-        db=connection.teledeteccion
-        landsat = db.landsat
-        
-        
-        try:
-        
-            landsat.update_one({'_id':self.escena}, {'$set':{'Productos': ['Turbidity']}},  upsert=True)
-            
-        except Exception as e:
-            print("Unexpected error:", type(e), e)
-            
+                    
         print('Turbidity Mask Generada')
