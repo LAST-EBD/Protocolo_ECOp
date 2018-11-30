@@ -1,5 +1,5 @@
 
-import os, shutil, re, time, subprocess, pandas, rasterio, sys, urllib, fiona, math
+import os, shutil, re, time, subprocess, pandas, rasterio, sys, math
 import numpy as np
 
 
