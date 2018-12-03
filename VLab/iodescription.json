@@ -9,7 +9,7 @@
       "obligation": true,
       "hasDefault": false,
       "valueSchema": "url",
-      "target": "input/landsat_scene.zip"
+      "target": "input/landsat_scene.tar.gz"
     },
 	{
       "id": "DataObject_0h3a4ff",
@@ -20,7 +20,7 @@
       "obligation": true,
       "hasDefault": false,
       "valueSchema": "url",
-      "target": "input/data.zip"
+      "target": "input/data.tar.gz"
     }
   ],
   "outputs": [
@@ -31,7 +31,7 @@
       "description": "GeoTIFF with NDVI, Flood Mask and Turbidity Water Mask",
       "name": "GeoTIFF with NDVI, Flood Mask and Turbidity Water Mask",
       "valueSchema": "url",
-      "target": "output/products.zip"
+      "target": "output/scene_products.tar.gz"
     }
   ]
 }
