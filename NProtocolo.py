@@ -131,7 +131,7 @@ class NLandsat(object):
                 
                 banda = i.split('_')[-1].split('.')[0]
                 
-                if banda not in ['B10', 'B11', 'B6']:
+                if banda not in ['B10', 'B11', 'B6', '1', '2']:
                     REFMULT = float(self.mtl['REFLECTANCE_MULT_BAND_'+ banda[1:]])
                     REFADD = float(self.mtl['REFLECTANCE_ADD_BAND_'+ banda[1:]])
 
@@ -766,9 +766,10 @@ class NLandsat(object):
                 print('Reference: ', dnorbandas[banda_num], 'Shape:', REF.shape)
             
             #Bands of current scene and reference scene like arrays
-            REF2 = REF[((CURRENT != 0) & (PIAS != 0)) & ((CLOUD == 0) | (CLOUD == 1))]
-            BANDA2 = CURRENT[((CURRENT != 0) & (PIAS != 0)) & ((CLOUD == 0) | (CLOUD == 1))]
-            PIAS2 = PIAS[((CURRENT != 0) & (PIAS != 0)) & ((CLOUD == 0) | (CLOUD == 1))]
+            #THIS IS FOR ECOPOTENTIAL WITHOUT FMASK, SO CLOUD MASK IS GOING TO BE ALWAYS BQA
+            REF2 = REF[((CURRENT != 0) & (PIAS != 0)) & (CLOUD == 0)]
+            BANDA2 = CURRENT[((CURRENT != 0) & (PIAS != 0)) & (CLOUD == 0)]
+            PIAS2 = PIAS[((CURRENT != 0) & (PIAS != 0)) & (CLOUD == 0)]
             
             #Apply first regression
             First_slope, First_intercept, r_value, p_value, std_err = linregress(BANDA2,REF2)
