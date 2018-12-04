@@ -53,6 +53,13 @@ def run_ECOp(scene_tar, data_tar):
         producto.ndvi()
         producto.turbidity(producto.flood())
         
+        #Comnpress the output files (ndvi, flood mask and water turbidity in the output folder)
+        print('compressing the products')
+        out_compress = tarfile.open(producto.pro_esc + '.tar.gz',  mode='w:gz')
+        for i in os.listdir(producto.pro_esc):
+            out_compress.add(os.path.join(producto.pro_esc, i))
+            
+        
         print('process finished in', time.time() - t0, 'segundos')
 
         
@@ -61,8 +68,7 @@ def run_ECOp(scene_tar, data_tar):
        print('This process only works with L1TP Landsats 5-TM, 7-ETM and 8-OLI')
         
         
-    #with zipfile.ZipFile(scene_zip, 'r') as inp_ref:
-        #inp_ref.extractall(os.path.join(ecop,'/ori/'))
-        
-run_ECOp('/home/diego/Descargas/LE07_L1TP_202034_20180730_20180825_01_T1.tar.gz', '/home/diego/protocolo/data.tar.gz')
-
+    
+#Run the code taking like i/o the ones defined in the VLab/iodescription.json
+if __name__ == '__main__':
+    run_ECOp('input/landsat_scene.tar.gz', 'input/data.tar.gz')
