@@ -1,17 +1,18 @@
 
 import os, tarfile, time
 
-os.chdir('/home/diego/Documentos/GitHub/Protocolo_ECOp')
+#os.chdir('/home/diego/Documentos/GitHub/Protocolo_ECOp')
+base_path = os.getcwd()
 
 from NProtocolo import NLandsat
 from NProductos import Product
 
 sats = {'LT05': 'l5tm', 'LE07': 'l7etm', 'LC08': 'l8oli'}
-base_path = '/home/diego/ECOprotocolo'
+
 
 def run_ECOp(scene_tar, data_tar):
    
-    
+    print('There we go!')
     t0 = time.time()
     
     sat = os.path.split(scene_tar)[1].split('_')[0]
@@ -24,7 +25,7 @@ def run_ECOp(scene_tar, data_tar):
         
         #Untar scene in /ori
         print('uncompressing scene')
-        ecop = os.path.join(base_path, os.path.join('ori', scene))
+        ecop = os.path.join('ori', scene)
         os.makedirs(ecop, exist_ok=True)
         os.chdir(ecop)
         tar = tarfile.open(scene_tar)
@@ -33,21 +34,22 @@ def run_ECOp(scene_tar, data_tar):
         
         #Untar data in /data
         print('uncompressing data')
-        os.chdir(base_path)
+        os.chdir('../../')
+        print(os.getcwd())
         tar = tarfile.open(data_tar)
         tar.extractall()
         tar.close()
         
         #Create rad, nor and temp path before run the process
         print('creating paths')
-        os.makedirs(os.path.join(base_path, 'rad'), exist_ok=True)
-        os.makedirs(os.path.join(base_path, 'nor'), exist_ok=True)
-        os.makedirs(os.path.join(base_path, 'temp'), exist_ok=True)
-        os.makedirs(os.path.join(base_path, 'pro'), exist_ok=True)
+        os.makedirs('rad', exist_ok=True)
+        os.makedirs('nor', exist_ok=True)
+        os.makedirs('temp', exist_ok=True)
+        os.makedirs('pro', exist_ok=True)
         
         #Run the process
         print('starting the process')
-        escena = NLandsat(ecop)
+        escena = NLandsat(os.path.join(base_path, ecop))
         escena.run()
         producto = Product(os.path.join(escena.nor, escena.escena))
         producto.ndvi()
@@ -71,4 +73,4 @@ def run_ECOp(scene_tar, data_tar):
     
 #Run the code taking like i/o the ones defined in the VLab/iodescription.json
 if __name__ == '__main__':
-    run_ECOp('input/landsat_scene.tar.gz', 'input/data.tar.gz')
+    run_ECOp(os.path.join(base_path,'Data/LC08_L1TP_202034_20180924_20180929_01_T1.tar.gz'), os.path.join(base_path, 'Data/data.tar.gz'))
