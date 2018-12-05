@@ -1,5 +1,5 @@
 {
-  "image": "digdgeo/ecopotencial",
+  "image": "digdgeo/ecopotencial:1.0",
   "resources": {
     "memory_mb": "5000",
     "cpu_units": ""
