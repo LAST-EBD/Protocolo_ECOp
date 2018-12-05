@@ -1,9 +1,6 @@
 
 import os, tarfile, time
 
-#os.chdir('/home/diego/Documentos/GitHub/Protocolo_ECOp')
-base_path = os.getcwd()
-
 from NProtocolo import NLandsat
 from NProductos import Product
 
@@ -13,6 +10,10 @@ sats = {'LT05': 'l5tm', 'LE07': 'l7etm', 'LC08': 'l8oli'}
 def run_ECOp(scene_tar, data_tar):
    
     print('There we go!')
+    
+    os.chdir('../')
+    base_path = os.getcwd()
+    
     t0 = time.time()
     
     sat = os.path.split(scene_tar)[1].split('_')[0]
@@ -55,11 +56,13 @@ def run_ECOp(scene_tar, data_tar):
         producto.ndvi()
         producto.turbidity(producto.flood())
         
-        #Comnpress the output files (ndvi, flood mask and water turbidity in the output folder)
-        print('compressing the products')
-        out_compress = tarfile.open(producto.pro_esc + '.tar.gz',  mode='w:gz')
-        for i in os.listdir(producto.pro_esc):
-            out_compress.add(os.path.join(producto.pro_esc, i))
+        #We don't need to compress each scene product folder beacuse we are going to compress the whole nor folder later
+        
+        #Compress the output files (ndvi, flood mask and water turbidity in the output folder)
+        #print('compressing the products')
+        #out_compress = tarfile.open(producto.pro_esc + '.tar.gz',  mode='w:gz')
+        #for i in os.listdir(producto.pro_esc):
+            #out_compress.add(os.path.join(producto.pro_esc, i))
             
         
         print('process finished in', time.time() - t0, 'segundos')
@@ -69,8 +72,40 @@ def run_ECOp(scene_tar, data_tar):
     
        print('This process only works with L1TP Landsats 5-TM, 7-ETM and 8-OLI')
         
-        
+           
     
 #Run the code taking like i/o the ones defined in the VLab/iodescription.json
 if __name__ == '__main__':
-    run_ECOp(os.path.join(base_path,'Data/LC08_L1TP_202034_20180924_20180929_01_T1.tar.gz'), os.path.join(base_path, 'Data/data.tar.gz'))
+    
+    t = time.time()
+    
+    print('Empezamos...')
+    os.chdir('Data')
+    path = os.getcwd()
+    data_tar = os.path.join(path, 'scene.tar.gz')
+    tar = tarfile.open(data_tar)
+    tar.extractall()
+    tar.close()
+    
+    scenes = os.path.join(path, 'scene')
+    for i in os.listdir(scenes):
+        try:
+            scene = os.path.join(scenes, i)
+            print(scene)
+            run_ECOp(scene, os.path.join(path, 'data.tar.gz'))
+        except Exception as e:
+            print(e)
+            continue
+        
+    print('Moving nor to scene_products')
+    os.chdir('../../')
+    print('We are in', os.getcwd())
+    dst = 'Data/scene_products'
+    os.rename('pro', dst)
+    
+    print('Compressing scene_products')
+    out_compress = tarfile.open(dst + '.tar.gz',  mode='w:gz')
+    for i in os.listdir(dst):
+        out_compress.add(os.path.join(dst, i))
+    
+    print('Process finished in', time.time() - t, 'segundos')

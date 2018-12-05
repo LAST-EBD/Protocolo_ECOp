@@ -9,7 +9,7 @@
       "obligation": true,
       "hasDefault": false,
       "valueSchema": "url",
-      "target": "Data/landsat_scene.tar.gz"
+      "target": "Data/scene.tar.gz"
     },
 	{
       "id": "DataObject_0h3a4ff",
