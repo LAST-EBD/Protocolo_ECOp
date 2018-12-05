@@ -17,7 +17,7 @@
  },
     {
       "repoPath": "NCall.py",
-      "targetPath": "Ncall.py",
+      "targetPath": "NCall.py",
       "pathType": "FILE"
  }
   ]
